@@ -13,15 +13,21 @@ import roomescape.member.session.MemberSessionStore;
 import org.springframework.mock.web.MockHttpSession;
 import org.springframework.test.web.servlet.MockMvc;
 import roomescape.member.LoginMember;
+import roomescape.theme.Theme;
+import roomescape.time.Time;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
+import static org.hamcrest.Matchers.hasSize;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
+import static org.mockito.Mockito.mock;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -36,6 +42,31 @@ class ReservationControllerTest {
 
     @MockBean
     private ReservationService reservationService;
+
+    @Test
+    void 내_예약_목록_조회시_로그인_회원_ID를_전달하고_응답을_반환한다() throws Exception {
+        // given
+        Reservation reservation = mock(Reservation.class);
+        Theme theme = new Theme("테마2", "테마 설명");
+        Time time = new Time("10:00");
+        given(reservation.getId()).willReturn(4L);
+        given(reservation.getTheme()).willReturn(theme);
+        given(reservation.getDate()).willReturn("2024-03-01");
+        given(reservation.getTime()).willReturn(time);
+        given(reservationService.findMyReservations(1L)).willReturn(List.of(reservation));
+
+        // when & then
+        mockMvc.perform(get("/reservations-mine").session(loginSession()))
+                .andExpect(status().isOk())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.reservations", hasSize(1)))
+                .andExpect(jsonPath("$.reservations[0].reservationId").value(4))
+                .andExpect(jsonPath("$.reservations[0].theme").value("테마2"))
+                .andExpect(jsonPath("$.reservations[0].date").value("2024-03-01"))
+                .andExpect(jsonPath("$.reservations[0].time").value("10:00"))
+                .andExpect(jsonPath("$.reservations[0].status").value("예약"));
+        then(reservationService).should().findMyReservations(1L);
+    }
 
     @Test
     void 예약_생성_요청과_로그인_회원_ID를_서비스에_전달한다() throws Exception {

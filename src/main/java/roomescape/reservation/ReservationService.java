@@ -44,6 +44,7 @@ public class ReservationService {
                 .orElseThrow(() -> new ThemeException(ThemeErrorCode.THEME_NOT_FOUND));
 
         String reservationName = reservationRequest.getName() != null
+                && !reservationRequest.getName().isBlank()
                 ? reservationRequest.getName() : member.getName();
 
         Reservation saved = reservationRepository.saveReservation(new Reservation(
@@ -55,6 +56,10 @@ public class ReservationService {
     @Transactional
     public void deleteById(Long id) {
         reservationRepository.deleteById(id);
+    }
+
+    public List<Reservation> findMyReservations(Long memberId) {
+        return reservationRepository.findAllByMemberId(memberId);
     }
 
     public List<ReservationResponse> findAll() {

@@ -42,4 +42,13 @@ public class ReservationController {
         reservationService.deleteById(id);
         return ResponseEntity.noContent().build();
     }
+
+    @GetMapping("/reservations-mine")
+    public ResponseEntity<MyReservationsResponse> getMyReservations(LoginMember loginMember) {
+        List<MyReservationResponse> reservations = reservationService.findMyReservations(loginMember.id())
+                .stream()
+                .map(MyReservationResponse::from)
+                .toList();
+        return ResponseEntity.ok(new MyReservationsResponse(reservations));
+    }
 }

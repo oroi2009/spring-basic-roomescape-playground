@@ -103,10 +103,36 @@ class ReservationIntegrationTest extends IntegrationTestSupport {
         assertThat(response.jsonPath().getString("code")).isEqualTo("MEMBER_LOGIN_REQUIRED");
     }
 
+    @Test
+    void 로그인한_회원의_예약_목록만_조회한다() {
+        // given
+        String token = login("brown@email.com");
+
+        // when
+        ExtractableResponse<Response> response = RestAssured.given()
+                .cookie("token", token)
+                .when().get("/reservations-mine")
+                .then().statusCode(200)
+                .contentType(ContentType.JSON)
+                .extract();
+
+        // then
+        assertThat(response.jsonPath().getList("reservations")).hasSize(1);
+        assertThat(response.jsonPath().getLong("reservations[0].reservationId")).isNotNull();
+        assertThat(response.jsonPath().getString("reservations[0].theme")).isEqualTo("테마2");
+        assertThat(response.jsonPath().getString("reservations[0].date")).isEqualTo("2024-03-01");
+        assertThat(response.jsonPath().getString("reservations[0].time")).isEqualTo("10:00");
+        assertThat(response.jsonPath().getString("reservations[0].status")).isEqualTo("예약");
+    }
+
     private String login() {
+        return login("admin@email.com");
+    }
+
+    private String login(String email) {
         return RestAssured.given()
                 .contentType(ContentType.JSON)
-                .body(Map.of("email", "admin@email.com", "password", "password"))
+                .body(Map.of("email", email, "password", "password"))
                 .when().post("/login")
                 .then().statusCode(200)
                 .extract().cookie("token");

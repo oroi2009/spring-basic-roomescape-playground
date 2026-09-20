@@ -15,7 +15,8 @@ VALUES ('10:00', false),
        ('18:00', false),
        ('20:00', false);
 
-INSERT INTO reservations (name, date, time_id, theme_id, member_id)
-VALUES ('어드민', '2024-03-01', 1, 1, 1),
-       ('어드민', '2024-03-01', 2, 2, 1),
-       ('어드민', '2024-03-01', 3, 3, 1);
+INSERT INTO reservations (member_id, name, date, time_id, theme_id)
+VALUES (1, '', '2024-03-01', 1, 1),
+       (1, '', '2024-03-01', 2, 2),
+       (1, '', '2024-03-01', 3, 3),
+       (2, '브라운', '2024-03-01', 1, 2);
