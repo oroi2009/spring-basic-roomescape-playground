@@ -26,7 +26,7 @@ class ReservationIntegrationTest extends IntegrationTestSupport {
     @AfterEach
     void tearDown() {
         for (Long id : reservationIds) {
-            jdbcTemplate.update("delete from reservation where id = ?", id);
+            jdbcTemplate.update("delete from reservations where id = ?", id);
         }
     }
 
@@ -44,7 +44,7 @@ class ReservationIntegrationTest extends IntegrationTestSupport {
     }
 
     @Test
-    void 이름을_지정하면_로그인_회원보다_지정한_회원을_우선한다() {
+    void 이름을_지정해도_로그인_회원을_예약_소유자로_저장한다() {
         // given
         String token = login();
         Map<String, Object> request = createReservationRequest();
@@ -55,6 +55,9 @@ class ReservationIntegrationTest extends IntegrationTestSupport {
 
         // then
         assertReservationName(response, "브라운");
+        Long memberId = jdbcTemplate.queryForObject("select id from members where email = ?", Long.class, "admin@email.com");
+        assertThat(jdbcTemplate.queryForObject("select member_id from reservations where id = ?", Long.class, response.jsonPath().getLong("id")))
+                .isEqualTo(memberId);
     }
 
     @Test
@@ -63,7 +66,7 @@ class ReservationIntegrationTest extends IntegrationTestSupport {
         String token = login();
         Map<String, Object> request = createReservationRequest();
         request.remove("date");
-        Integer beforeCount = jdbcTemplate.queryForObject("select count(*) from reservation", Integer.class);
+        Integer beforeCount = jdbcTemplate.queryForObject("select count(*) from reservations", Integer.class);
 
         // when
         ExtractableResponse<Response> response = RestAssured.given()
@@ -78,7 +81,7 @@ class ReservationIntegrationTest extends IntegrationTestSupport {
         // then
         assertThat(response.jsonPath().getString("code")).isEqualTo("GLOBAL_BAD_REQUEST");
         assertThat(response.jsonPath().getString("message")).isEqualTo("예약 날짜는 비어 있을 수 없습니다.");
-        assertThat(jdbcTemplate.queryForObject("select count(*) from reservation", Integer.class))
+        assertThat(jdbcTemplate.queryForObject("select count(*) from reservations", Integer.class))
                 .isEqualTo(beforeCount);
     }
 
@@ -133,7 +136,7 @@ class ReservationIntegrationTest extends IntegrationTestSupport {
     private void assertReservationName(ExtractableResponse<Response> response, String name) {
         Long id = response.jsonPath().getLong("id");
         assertThat(response.jsonPath().getString("name")).isEqualTo(name);
-        assertThat(jdbcTemplate.queryForObject("select name from reservation where id = ?", String.class, id))
+        assertThat(jdbcTemplate.queryForObject("select name from reservations where id = ?", String.class, id))
                 .isEqualTo(name);
     }
 }

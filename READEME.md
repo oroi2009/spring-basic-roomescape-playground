@@ -1,7 +1,7 @@
 # Spring Data JPA
 
 ## 요구사항
-- [ ] JPA를 활용하여 데이터베이스에 접근하도록 수정한다.
+- [x] JPA를 활용하여 데이터베이스에 접근하도록 수정한다.
 - [ ] 로그인한 사용자의 예약 목록을 조회하는 API를 구현한다.
 - [ ] 예약 대기 요청/취소 기능을 구현한다.
 - [ ] 내 예약 목록 조회 시 예약 대기 목록도 함께 포함한다.
@@ -10,8 +10,8 @@
 
 ## 엔티티 매핑
 
-- [ ] `Member`, `Theme`, `Time`을 엔티티로 매핑한다.
-- [ ] `Reservation`은 `Member`, `Theme`, `Time`과의 연관관계를 매핑한다.
+- [x] `Member`, `Theme`, `Time`을 엔티티로 매핑한다.
+- [x] `Reservation`은 `Member`, `Theme`, `Time`과의 연관관계를 매핑한다.
 
 ## 기능 목록
 
@@ -49,11 +49,6 @@
 - [ ] 유효한 `token` 쿠키와 함께 `POST /waitings` 요청 시 상태 코드 `201`을 반환한다.
 - [ ] 유효한 `token` 쿠키와 함께 `DELETE /waitings/{id}` 요청 시 상태 코드 `204`를 반환한다.
 - [ ] 중복 예약 또는 중복 대기 요청은 허용하지 않는다.
-
-### JPA 테스트
-
-- [ ] `Member`, `Theme`, `Time`을 JPA Repository로 저장하고 조회할 수 있다.
-- [ ] `Reservation`을 저장하고 연관된 `Member`, `Theme`, `Time`을 함께 조회할 수 있다.
 
 # Spring MVC [인증]
 

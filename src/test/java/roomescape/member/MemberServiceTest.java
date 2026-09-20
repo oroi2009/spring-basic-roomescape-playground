@@ -3,19 +3,18 @@ package roomescape.member;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.jdbc.JdbcTest;
+import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.context.annotation.Import;
-import org.springframework.jdbc.core.JdbcTemplate;
 import roomescape.member.exception.MemberErrorCode;
 import roomescape.member.exception.MemberException;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@JdbcTest
-@Import({MemberService.class, MemberDao.class})
+@DataJpaTest
+@Import(MemberService.class)
 class MemberServiceTest {
-    private static final String EMAIL = "login-service@email.com";
+    private static final String EMAIL = "test@email.com";
     private static final String PASSWORD = "password";
     private Long memberId;
 
@@ -23,13 +22,12 @@ class MemberServiceTest {
     private MemberService memberService;
 
     @Autowired
-    private JdbcTemplate jdbcTemplate;
+    private MemberRepository memberRepository;
 
     @BeforeEach
     void setUp() {
-        jdbcTemplate.update("insert into member (name, email, password, role) values (?, ?, ?, ?)",
-                "테스터", EMAIL, PASSWORD, "USER");
-        memberId = jdbcTemplate.queryForObject("select id from member where email = ?", Long.class, EMAIL);
+        Member member = memberRepository.save(new Member("테스터", EMAIL, PASSWORD, "USER"));
+        memberId = member.getId();
     }
 
     @Test

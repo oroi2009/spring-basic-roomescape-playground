@@ -33,8 +33,7 @@ public class MemberController {
     @PostMapping("/logout")
     public ResponseEntity<Void> logout(
             HttpServletRequest request,
-            HttpServletResponse response)
-    {
+            HttpServletResponse response) {
         HttpSession session = request.getSession(false);
 
         if (session != null) {

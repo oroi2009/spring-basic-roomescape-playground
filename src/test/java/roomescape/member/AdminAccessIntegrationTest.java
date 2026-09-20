@@ -65,9 +65,9 @@ class AdminAccessIntegrationTest extends IntegrationTestSupport {
                     .when().delete(path + "/" + id).then().statusCode(204);
         } finally {
             if (path.equals("/manager/times")) {
-                jdbcTemplate.update("delete from time where id = ?", id);
+                jdbcTemplate.update("delete from times where id = ?", id);
             } else {
-                jdbcTemplate.update("delete from theme where id = ?", id);
+                jdbcTemplate.update("delete from themes where id = ?", id);
             }
         }
     }
@@ -79,6 +79,7 @@ class AdminAccessIntegrationTest extends IntegrationTestSupport {
         RestAssured.given().when().get(path)
                 .then().statusCode(200).contentType("application/json");
     }
+
     private Map<String, String> createRequest(String path) {
         if (path.equals("/manager/times")) {
             return Map.of("value", "23:40");
