@@ -3,6 +3,7 @@ package roomescape.waiting;
 import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import roomescape.waiting.exception.WaitingErrorCode;
@@ -13,6 +14,10 @@ import java.util.List;
 import java.util.Locale;
 
 public interface WaitingRepository extends JpaRepository<Waiting, Long> {
+
+    @Modifying
+    @Query("delete from Waiting w where w.id = :waitingId and w.member.id = :memberId")
+    int deleteByIdAndMemberId(@Param("waitingId") Long waitingId, @Param("memberId") Long memberId);
 
     @Query("""
             select new roomescape.waiting.WaitingWithRank(w,

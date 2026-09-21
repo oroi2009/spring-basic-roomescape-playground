@@ -75,10 +75,9 @@ public class WaitingService {
 
     @Transactional
     public void delete(Long waitingId, Long memberId) {
-        Waiting waiting = waitingRepository.findById(waitingId)
-                .filter(it -> it.getMember().getId().equals(memberId))
-                .orElseThrow(() -> new WaitingException(WaitingErrorCode.WAITING_NOT_FOUND));
-
-        waitingRepository.delete(waiting);
+        int deletedCount = waitingRepository.deleteByIdAndMemberId(waitingId, memberId);
+        if (deletedCount == 0) {
+            throw new WaitingException(WaitingErrorCode.WAITING_NOT_FOUND);
+        }
     }
 }
