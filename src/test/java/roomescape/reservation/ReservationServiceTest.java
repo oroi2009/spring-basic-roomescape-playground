@@ -10,6 +10,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import roomescape.member.Member;
 import roomescape.reservation.exception.ReservationErrorCode;
 import roomescape.reservation.exception.ReservationException;
+import roomescape.slot.Slot;
 import roomescape.theme.Theme;
 import roomescape.theme.exception.ThemeErrorCode;
 import roomescape.theme.exception.ThemeException;
@@ -20,6 +21,7 @@ import roomescape.waiting.Waiting;
 
 import java.time.LocalDateTime;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -114,7 +116,7 @@ class ReservationServiceTest {
     }
 
     @Test
-    void 본인의_예약과_대기를_순서대로_반환하고_다른_회원의_대기도_순번에_반영한다() {
+    void 본인의_예약과_대기를_조회하고_다른_회원의_대기도_순번에_반영한다() {
         // given
         createReservationsAndWaitings();
 
@@ -150,6 +152,65 @@ class ReservationServiceTest {
     }
 
     @Test
+    void 예약이_삭제되면_가장_앞선_대기자가_예약으로_승격된다() {
+        // given
+        createReservationsAndWaitings();
+        Long reservationId = reservation.getId();
+        Long slotId = jdbcTemplate.queryForObject(
+                "select slot_id from reservations where id = ?", Long.class, reservationId);
+        Long waitingMemberId = jdbcTemplate.queryForObject(
+                "select member_id from waitings where slot_id = ?", Long.class, slotId);
+
+        // when
+        reservationService.deleteById(reservationId);
+        entityManager.flush();
+
+        // then
+        assertThat(jdbcTemplate.queryForObject(
+                "select count(*) from reservations where id = ?", Integer.class, reservationId))
+                .isZero();
+        assertThat(jdbcTemplate.queryForObject(
+                "select member_id from reservations where slot_id = ?", Long.class, slotId))
+                .isEqualTo(waitingMemberId);
+        assertThat(jdbcTemplate.queryForObject(
+                "select count(*) from waitings where slot_id = ?", Integer.class, slotId))
+                .isZero();
+    }
+
+    @Test
+    void 대기가_여러명이어도_가장_앞선_대기자만_승격되고_나머지는_유지된다() {
+        // given
+        createReservationsAndWaitings();
+        Long reservationId = reservation.getId();
+        Long slotId = jdbcTemplate.queryForObject(
+                "select slot_id from reservations where id = ?", Long.class, reservationId);
+        Member nextMember = entityManager.persist(
+                new Member("다음 대기자", "next@email.com", "password", "USER"));
+        Slot slot = entityManager.find(Slot.class, slotId);
+        entityManager.persist(new Waiting(
+                slot, nextMember, LocalDateTime.of(2026, 9, 21, 12, 0)));
+        entityManager.flush();
+        entityManager.clear();
+
+        List<Long> waitingMemberIdsBefore = jdbcTemplate.queryForList(
+                "select member_id from waitings where slot_id = ? order by created_at, id",
+                Long.class, slotId);
+
+        // when
+        reservationService.deleteById(reservationId);
+        entityManager.flush();
+
+        // then
+        assertThat(jdbcTemplate.queryForList(
+                "select member_id from reservations where slot_id = ?", Long.class, slotId))
+                .containsExactly(waitingMemberIdsBefore.get(0));
+        assertThat(jdbcTemplate.queryForList(
+                "select member_id from waitings where slot_id = ? order by created_at, id",
+                Long.class, slotId))
+                .containsExactly(waitingMemberIdsBefore.get(1));
+    }
+
+    @Test
     void 예약과_대기가_없으면_빈_목록을_반환한다() {
         // given
         Member emptyMember = entityManager.persist(new Member("빈회원", "empty@email.com", "password", "USER"));
@@ -169,12 +230,14 @@ class ReservationServiceTest {
         Time time = entityManager.persist(new Time("09:00"));
         Theme theme = entityManager.persist(new Theme("테스트 테마", "테마 설명"));
         LocalDateTime createdAt = LocalDateTime.of(2026, 9, 21, 10, 0);
+        Slot reservationSlot = entityManager.persist(new Slot("2027-08-16", time, theme));
+        Slot waitingSlot = entityManager.persist(new Slot("2027-08-15", time, theme));
 
-        reservation = entityManager.persist(new Reservation("테스터", "2027-08-16", time, theme, member));
-        entityManager.persist(new Reservation("다른회원", "2027-08-15", time, theme, otherMember));
-        earlierWaiting = entityManager.persist(new Waiting("2027-08-15", time, theme, earlierMember, createdAt));
-        waiting = entityManager.persist(new Waiting("2027-08-15", time, theme, member, createdAt));
-        entityManager.persist(new Waiting("2027-08-16", time, theme, otherMember, createdAt.minusDays(1)));
+        reservation = entityManager.persist(new Reservation("테스터", reservationSlot, member));
+        entityManager.persist(new Reservation("다른회원", waitingSlot, otherMember));
+        earlierWaiting = entityManager.persist(new Waiting(waitingSlot, earlierMember, createdAt));
+        waiting = entityManager.persist(new Waiting(waitingSlot, member, createdAt));
+        entityManager.persist(new Waiting(reservationSlot, otherMember, createdAt.minusDays(1)));
         entityManager.flush();
         entityManager.clear();
     }

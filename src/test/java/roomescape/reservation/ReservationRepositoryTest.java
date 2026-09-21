@@ -6,6 +6,7 @@ import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
 import org.junit.jupiter.api.BeforeEach;
 import roomescape.member.Member;
+import roomescape.slot.Slot;
 import roomescape.theme.Theme;
 import roomescape.time.Time;
 
@@ -36,7 +37,10 @@ class ReservationRepositoryTest {
         entityManager.persist(time);
         entityManager.persist(theme);
 
-        reservation = new Reservation("테스터", RESERVATION_DATE, time, theme, member);
+        Slot slot = new Slot(RESERVATION_DATE, time, theme);
+        entityManager.persist(slot);
+
+        reservation = new Reservation("테스터", slot, member);
         entityManager.persist(reservation);
         entityManager.flush();
     }

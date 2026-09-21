@@ -11,6 +11,7 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 import roomescape.member.Member;
+import roomescape.slot.Slot;
 import roomescape.theme.Theme;
 import roomescape.time.Time;
 
@@ -21,8 +22,8 @@ import java.time.LocalDateTime;
         name = "waitings",
         uniqueConstraints = {
                 @UniqueConstraint(
-                        name = "uk_waitings_member_date_time_theme",
-                        columnNames = {"member_id", "date", "time_id", "theme_id"}
+                        name = "uk_waitings_member_slot",
+                        columnNames = {"member_id", "slot_id"}
                 )
         }
 )
@@ -31,19 +32,12 @@ public class Waiting {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false)
-    private String date;
-
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "time_id", nullable = false)
-    private Time time;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "theme_id", nullable = false)
-    private Theme theme;
+    @JoinColumn(name = "slot_id", nullable = false)
+    private Slot slot;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "member_id", nullable = false)
@@ -52,14 +46,12 @@ public class Waiting {
     protected Waiting() {
     }
 
-    public Waiting(String date, Time time, Theme theme, Member member) {
-        this(date, time, theme, member, LocalDateTime.now());
+    public Waiting(Slot slot, Member member) {
+        this(slot, member, LocalDateTime.now());
     }
 
-    public Waiting(String date, Time time, Theme theme, Member member, LocalDateTime createdAt) {
-        this.date = date;
-        this.time = time;
-        this.theme = theme;
+    public Waiting(Slot slot, Member member, LocalDateTime createdAt) {
+        this.slot = slot;
         this.member = member;
         this.createdAt = createdAt;
     }
@@ -69,7 +61,7 @@ public class Waiting {
     }
 
     public String getDate() {
-        return date;
+        return slot.getDate();
     }
 
     public LocalDateTime getCreatedAt() {
@@ -77,11 +69,15 @@ public class Waiting {
     }
 
     public Time getTime() {
-        return time;
+        return slot.getTime();
     }
 
     public Theme getTheme() {
-        return theme;
+        return slot.getTheme();
+    }
+
+    public Slot getSlot() {
+        return slot;
     }
 
     public Member getMember() {

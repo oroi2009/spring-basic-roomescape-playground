@@ -140,7 +140,8 @@ class WaitingIntegrationTest extends IntegrationTestSupport {
         // then
         assertThat(testerResponse.jsonPath().getLong("waitingNumber")).isEqualTo(2L);
         assertThat(jdbcTemplate.queryForObject(
-                "select count(*) from waitings where date = ? and time_id = ? and theme_id = ?",
+                "select count(*) from waitings w join slots s on w.slot_id = s.id "
+                        + "where s.date = ? and s.time_id = ? and s.theme_id = ?",
                 Integer.class, "2024-03-01", 1L, 1L)).isEqualTo(2);
     }
 
