@@ -4,6 +4,7 @@ import org.springframework.http.HttpStatus;
 import roomescape.global.response.code.ErrorCode;
 
 public enum WaitingErrorCode implements ErrorCode {
+    WAITING_NOT_FOUND("WAITING_NOT_FOUND", HttpStatus.NOT_FOUND, "예약 대기를 찾을 수 없습니다."),
     WAITING_NOT_AVAILABLE("WAITING_NOT_AVAILABLE", HttpStatus.CONFLICT, "예약 대기를 신청할 수 없는 시간대입니다."),
     ALREADY_RESERVED("WAITING_ALREADY_RESERVED", HttpStatus.CONFLICT, "이미 예약한 시간에는 예약 대기를 신청할 수 없습니다."),
     DUPLICATE_WAITING("WAITING_DUPLICATE", HttpStatus.CONFLICT, "이미 예약 대기를 신청한 시간입니다.");

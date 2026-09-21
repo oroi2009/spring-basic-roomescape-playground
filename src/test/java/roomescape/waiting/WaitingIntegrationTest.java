@@ -90,6 +90,44 @@ class WaitingIntegrationTest extends IntegrationTestSupport {
     }
 
     @Test
+    void 본인의_예약_대기를_취소한다() {
+        // given
+        String token = login("brown@email.com");
+        Long waitingId = createWaiting(token, "2024-03-01", 1L, 1L).jsonPath().getLong("id");
+
+        // when
+        RestAssured.given()
+                .cookie("token", token)
+                .when().delete("/waitings/" + waitingId)
+                .then().statusCode(204);
+
+        // then
+        assertThat(jdbcTemplate.queryForObject(
+                "select count(*) from waitings where id = ?", Integer.class, waitingId)).isZero();
+    }
+
+    @Test
+    void 다른_회원의_예약_대기는_취소할_수_없다() {
+        // given
+        String ownerToken = login("brown@email.com");
+        String otherToken = login("admin@email.com");
+        Long waitingId = createWaiting(ownerToken, "2024-03-01", 1L, 1L)
+                .jsonPath().getLong("id");
+
+        // when
+        ExtractableResponse<Response> response = RestAssured.given()
+                .cookie("token", otherToken)
+                .when().delete("/waitings/" + waitingId)
+                .then().statusCode(404)
+                .extract();
+
+        // then
+        assertThat(response.jsonPath().getString("code")).isEqualTo("WAITING_NOT_FOUND");
+        assertThat(jdbcTemplate.queryForObject(
+                "select count(*) from waitings where id = ?", Integer.class, waitingId)).isEqualTo(1);
+    }
+
+    @Test
     void 서로_다른_회원은_같은_시간대에_예약_대기할_수_있다() {
         // given
         String brownToken = login("brown@email.com");

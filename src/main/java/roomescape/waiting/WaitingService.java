@@ -72,4 +72,13 @@ public class WaitingService {
 
         return WaitingResponse.from(waiting, earlierWaitingCount + 1);
     }
+
+    @Transactional
+    public void delete(Long waitingId, Long memberId) {
+        Waiting waiting = waitingRepository.findById(waitingId)
+                .filter(it -> it.getMember().getId().equals(memberId))
+                .orElseThrow(() -> new WaitingException(WaitingErrorCode.WAITING_NOT_FOUND));
+
+        waitingRepository.delete(waiting);
+    }
 }
