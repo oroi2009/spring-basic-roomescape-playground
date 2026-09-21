@@ -19,6 +19,10 @@ public interface ReservationRepository extends JpaRepository<Reservation, Long> 
 
     List<Reservation> findByDateAndThemeId(String date, Long themeId);
 
+    boolean existsByDateAndTimeIdAndThemeId(String date, Long timeId, Long themeId);
+
+    boolean existsByDateAndTimeIdAndThemeIdAndMemberId(String date, Long timeId, Long themeId, Long memberId);
+
     @Query("""
             select r from Reservation r join fetch r.time join fetch r.theme
             where r.member.id = :memberId
