@@ -107,6 +107,29 @@ class WaitingIntegrationTest extends IntegrationTestSupport {
     }
 
     @Test
+    void 내_예약_목록에_본인의_예약과_대기_순번을_함께_반환한다() {
+        // given
+        String token = login("brown@email.com");
+        String otherToken = createMemberAndLogin();
+        createWaiting(otherToken, "2024-03-01", 1L, 1L);
+        Long waitingId = createWaiting(token, "2024-03-01", 1L, 1L).jsonPath().getLong("id");
+
+        // when
+        ExtractableResponse<Response> response = RestAssured.given()
+                .cookie("token", token)
+                .when().get("/reservations-mine")
+                .then().statusCode(200)
+                .extract();
+
+        // then
+        assertThat(response.jsonPath().getList("reservations")).hasSize(2);
+        assertThat(response.jsonPath().getList("reservations.status", String.class))
+                .containsExactly("예약", "대기 2번");
+        assertThat(response.jsonPath().getLong("reservations[0].reservationId")).isNotNull();
+        assertThat(response.jsonPath().getLong("reservations[1].waitingId")).isEqualTo(waitingId);
+    }
+
+    @Test
     void 예약이_없는_시간대에는_예약_대기할_수_없다() {
         // given
         String token = login();

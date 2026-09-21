@@ -14,6 +14,7 @@ import roomescape.time.Time;
 import roomescape.time.TimeRepository;
 import roomescape.time.exception.TimeErrorCode;
 import roomescape.time.exception.TimeException;
+import roomescape.waiting.WaitingRepository;
 
 import java.util.List;
 
@@ -24,13 +25,16 @@ public class ReservationService {
     private final MemberRepository memberRepository;
     private final TimeRepository timeRepository;
     private final ThemeRepository themeRepository;
+    private final WaitingRepository waitingRepository;
 
     public ReservationService(ReservationRepository reservationRepository, MemberRepository memberRepository,
-                              TimeRepository timeRepository, ThemeRepository themeRepository) {
+                              TimeRepository timeRepository, ThemeRepository themeRepository,
+                              WaitingRepository waitingRepository) {
         this.reservationRepository = reservationRepository;
         this.memberRepository = memberRepository;
         this.timeRepository = timeRepository;
         this.themeRepository = themeRepository;
+        this.waitingRepository = waitingRepository;
     }
 
     @Transactional
@@ -58,13 +62,16 @@ public class ReservationService {
         reservationRepository.deleteById(id);
     }
 
-    public List<Reservation> findMyReservations(Long memberId) {
-        return reservationRepository.findAllByMemberId(memberId);
-    }
-
     public List<ReservationResponse> findAll() {
         return reservationRepository.findAll().stream()
                 .map(ReservationResponse::from)
                 .toList();
+    }
+
+    public MyReservations findMyReservations(Long memberId) {
+        return new MyReservations(
+                reservationRepository.findAllByMemberId(memberId),
+                waitingRepository.findAllWithRankByMemberId(memberId)
+        );
     }
 }

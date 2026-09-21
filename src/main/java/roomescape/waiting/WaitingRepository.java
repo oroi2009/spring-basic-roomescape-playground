@@ -9,9 +9,24 @@ import roomescape.waiting.exception.WaitingErrorCode;
 import roomescape.waiting.exception.WaitingException;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Locale;
 
 public interface WaitingRepository extends JpaRepository<Waiting, Long> {
+
+    @Query("""
+            select new roomescape.waiting.WaitingWithRank(w,
+                (select count(earlier) + 1 from Waiting earlier
+                 where earlier.date = w.date and earlier.time = w.time and earlier.theme = w.theme
+                   and (earlier.createdAt < w.createdAt
+                        or (earlier.createdAt = w.createdAt and earlier.id < w.id))))
+            from Waiting w
+            join fetch w.time
+            join fetch w.theme
+            where w.member.id = :memberId
+            order by w.createdAt, w.id
+            """)
+    List<WaitingWithRank> findAllWithRankByMemberId(@Param("memberId") Long memberId);
 
     @Query("""
             select count(w) from Waiting w

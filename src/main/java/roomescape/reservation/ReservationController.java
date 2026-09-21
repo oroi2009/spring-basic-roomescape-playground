@@ -45,10 +45,7 @@ public class ReservationController {
 
     @GetMapping("/reservations-mine")
     public ResponseEntity<MyReservationsResponse> getMyReservations(LoginMember loginMember) {
-        List<MyReservationResponse> reservations = reservationService.findMyReservations(loginMember.id())
-                .stream()
-                .map(MyReservationResponse::from)
-                .toList();
-        return ResponseEntity.ok(new MyReservationsResponse(reservations));
+        MyReservations reservations = reservationService.findMyReservations(loginMember.id());
+        return ResponseEntity.ok(MyReservationsResponse.from(reservations));
     }
 }

@@ -15,6 +15,8 @@ import org.springframework.test.web.servlet.MockMvc;
 import roomescape.member.LoginMember;
 import roomescape.theme.Theme;
 import roomescape.time.Time;
+import roomescape.waiting.Waiting;
+import roomescape.waiting.WaitingWithRank;
 
 import java.util.HashMap;
 import java.util.List;
@@ -47,24 +49,31 @@ class ReservationControllerTest {
     void 내_예약_목록_조회시_로그인_회원_ID를_전달하고_응답을_반환한다() throws Exception {
         // given
         Reservation reservation = mock(Reservation.class);
-        Theme theme = new Theme("테마2", "테마 설명");
-        Time time = new Time("10:00");
         given(reservation.getId()).willReturn(4L);
-        given(reservation.getTheme()).willReturn(theme);
+        given(reservation.getTheme()).willReturn(new Theme("테마2", "테마 설명"));
+        given(reservation.getTime()).willReturn(new Time("10:00"));
         given(reservation.getDate()).willReturn("2024-03-01");
-        given(reservation.getTime()).willReturn(time);
-        given(reservationService.findMyReservations(1L)).willReturn(List.of(reservation));
+        Waiting waiting = mock(Waiting.class);
+        given(waiting.getId()).willReturn(5L);
+        given(waiting.getTheme()).willReturn(new Theme("테마1", "테마 설명"));
+        given(waiting.getTime()).willReturn(new Time("12:00"));
+        given(waiting.getDate()).willReturn("2024-03-01");
+        MyReservations result = new MyReservations(
+                List.of(reservation), List.of(new WaitingWithRank(waiting, 2L)));
+        given(reservationService.findMyReservations(1L)).willReturn(result);
 
         // when & then
         mockMvc.perform(get("/reservations-mine").session(loginSession()))
                 .andExpect(status().isOk())
                 .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
-                .andExpect(jsonPath("$.reservations", hasSize(1)))
+                .andExpect(jsonPath("$.reservations", hasSize(2)))
                 .andExpect(jsonPath("$.reservations[0].reservationId").value(4))
                 .andExpect(jsonPath("$.reservations[0].theme").value("테마2"))
                 .andExpect(jsonPath("$.reservations[0].date").value("2024-03-01"))
                 .andExpect(jsonPath("$.reservations[0].time").value("10:00"))
-                .andExpect(jsonPath("$.reservations[0].status").value("예약"));
+                .andExpect(jsonPath("$.reservations[0].status").value("예약"))
+                .andExpect(jsonPath("$.reservations[1].waitingId").value(5))
+                .andExpect(jsonPath("$.reservations[1].status").value("대기 2번"));
         then(reservationService).should().findMyReservations(1L);
     }
 
