@@ -64,7 +64,7 @@ public class ReservationService {
 
         Slot slot = slotRepository.findForUpdateByDateAndTimeIdAndThemeId(
                         reservationRequest.getDate(), time.getId(), theme.getId())
-                .orElseGet(() -> slotRepository.save(
+                .orElseGet(() -> slotRepository.saveSlot(
                         new Slot(reservationRequest.getDate(), time, theme)));
 
         Reservation saved = reservationRepository.saveReservation(new Reservation(
