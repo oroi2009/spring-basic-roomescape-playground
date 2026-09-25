@@ -211,6 +211,34 @@ class ReservationServiceTest {
     }
 
     @Test
+    void 대기자가_없는_예약을_삭제하면_예약만_삭제되고_슬롯은_유지된다() {
+        // given
+        Member reservationMember = entityManager.persist(
+                new Member("예약자", "reservation-owner@email.com", "password", "USER"));
+        Time time = entityManager.persist(new Time("10:00"));
+        Theme theme = entityManager.persist(new Theme("예약 테마", "테마 설명"));
+        Slot slot = entityManager.persist(new Slot("2027-08-17", time, theme));
+        Reservation reservation = entityManager.persist(
+                new Reservation("예약자", slot, reservationMember));
+        entityManager.flush();
+
+        // when
+        reservationService.deleteById(reservation.getId());
+        entityManager.flush();
+
+        // then
+        assertThat(jdbcTemplate.queryForObject(
+                "select count(*) from reservations where id = ?", Integer.class, reservation.getId()))
+                .isZero();
+        assertThat(jdbcTemplate.queryForObject(
+                "select count(*) from slots where id = ?", Integer.class, slot.getId()))
+                .isEqualTo(1);
+        assertThat(jdbcTemplate.queryForObject(
+                "select count(*) from waitings where slot_id = ?", Integer.class, slot.getId()))
+                .isZero();
+    }
+
+    @Test
     void 예약과_대기가_없으면_빈_목록을_반환한다() {
         // given
         Member emptyMember = entityManager.persist(new Member("빈회원", "empty@email.com", "password", "USER"));
