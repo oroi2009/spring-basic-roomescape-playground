@@ -1,16 +1,15 @@
 package roomescape.reservation;
 
-import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import roomescape.global.exception.ConstraintViolationUtils;
 import roomescape.reservation.exception.ReservationErrorCode;
 import roomescape.reservation.exception.ReservationException;
 
 import java.util.List;
-import java.util.Locale;
 
 public interface ReservationRepository extends JpaRepository<Reservation, Long> {
 
@@ -52,20 +51,6 @@ public interface ReservationRepository extends JpaRepository<Reservation, Long> 
     }
 
     private static boolean isDuplicateReservationViolation(DataIntegrityViolationException exception) {
-        Throwable cause = exception;
-        while (cause != null) {
-            if (cause instanceof ConstraintViolationException constraintViolationException) {
-                if (containsDuplicateReservationConstraint(constraintViolationException.getConstraintName())) {
-                    return true;
-                }
-            }
-            cause = cause.getCause();
-        }
-
-        return containsDuplicateReservationConstraint(exception.getMostSpecificCause().getMessage());
-    }
-
-    private static boolean containsDuplicateReservationConstraint(String value) {
-        return value != null && value.toLowerCase(Locale.ROOT).contains("uk_reservations_slot");
+        return ConstraintViolationUtils.hasConstraint(exception, "uk_reservations_slot");
     }
 }

@@ -1,18 +1,17 @@
 package roomescape.waiting;
 
-import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import roomescape.global.exception.ConstraintViolationUtils;
 import roomescape.waiting.exception.WaitingErrorCode;
 import roomescape.waiting.exception.WaitingException;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Locale;
 import java.util.Optional;
 
 public interface WaitingRepository extends JpaRepository<Waiting, Long> {
@@ -63,21 +62,6 @@ public interface WaitingRepository extends JpaRepository<Waiting, Long> {
     }
 
     private static boolean isDuplicateWaitingViolation(DataIntegrityViolationException exception) {
-        Throwable cause = exception;
-        while (cause != null) {
-            if (cause instanceof ConstraintViolationException constraintViolationException) {
-                if (containsDuplicateWaitingConstraint(constraintViolationException.getConstraintName())) {
-                    return true;
-                }
-            }
-            cause = cause.getCause();
-        }
-
-        return containsDuplicateWaitingConstraint(exception.getMostSpecificCause().getMessage());
-    }
-
-    private static boolean containsDuplicateWaitingConstraint(String value) {
-        return value != null && value.toLowerCase(Locale.ROOT)
-                .contains("uk_waitings_member_slot");
+        return ConstraintViolationUtils.hasConstraint(exception, "uk_waitings_member_slot");
     }
 }
